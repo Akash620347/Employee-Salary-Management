@@ -1,0 +1,53 @@
+<div class="page-heading">
+  <div>
+    <h1>Salary insights</h1>
+    <p class="muted">Annual gross base salary for active employees</p>
+  </div>
+  @if (summary) { <p class="count"><strong>{{ summary.activeEmployeeCount | number }}</strong> active employees</p> }
+</div>
+
+<section class="panel insight" aria-labelledby="summary-title">
+  <div class="section-heading"><h2 id="summary-title">{{ summaryConfig.title }}</h2></div>
+  @if (summaryError) {
+    <p class="empty" role="alert">{{ summaryError }} <button type="button" (click)="loadSummary()">Retry</button></p>
+  } @else if (!summary) {
+    <p class="empty" role="status">Loading salary summaries…</p>
+  } @else if (summary.byCurrency.length) {
+    <salary-table [config]="summaryConfig" [rows]="summary.byCurrency"></salary-table>
+  } @else {
+    <p class="empty">There are no active employees.</p>
+  }
+</section>
+
+<section class="panel insight" aria-labelledby="department-title">
+  <div class="section-heading"><h2 id="department-title">{{ departmentsConfig.title }}</h2></div>
+  @if (departmentsError) {
+    <p class="empty" role="alert">{{ departmentsError }} <button type="button" (click)="loadDepartments()">Retry</button></p>
+  } @else if (!departments) {
+    <p class="empty" role="status">Loading department summaries…</p>
+  } @else if (departments.length) {
+    <salary-table [config]="departmentsConfig" [rows]="departments"></salary-table>
+  } @else {
+    <p class="empty">There are no active employees in departments.</p>
+  }
+</section>
+
+<section class="panel insight" aria-labelledby="earners-title">
+  <div class="section-heading">
+    <h2 id="earners-title">{{ topConfig.title }}</h2>
+    <label class="currency-choice">Currency
+      <select [ngModel]="currency" (ngModelChange)="loadTop($event)">
+        @for (code of currencies; track code) { <option [value]="code">{{ code }}</option> }
+      </select>
+    </label>
+  </div>
+  @if (topError) {
+    <p class="empty" role="alert">{{ topError }} <button type="button" (click)="loadTop(currency)">Retry</button></p>
+  } @else if (!topEarners) {
+    <p class="empty" role="status">Loading top earners…</p>
+  } @else if (topEarners.length) {
+    <salary-table [config]="topConfig" [rows]="topEarners"></salary-table>
+  } @else {
+    <p class="empty">There are no active employees paid in {{ currency }}.</p>
+  }
+</section>

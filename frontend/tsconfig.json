@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "ES2023.Intl", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "strict": false,
+    "types": ["node"],
+    "paths": {
+      "@taomish-ui/common-ui-v2": ["./.taomish/src/index.ts"],
+      "libs/common-ui-v2/*": ["./.taomish/*"]
+    }
+  },
+  "files": ["src/main.ts"],
+  "angularCompilerOptions": {
+    "strictTemplates": false
+  }
+}

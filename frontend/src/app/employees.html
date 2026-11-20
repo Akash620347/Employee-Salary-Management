@@ -1,0 +1,138 @@
+<div class="page-heading">
+  <h1>{{ config.title }}</h1>
+  <button type="button" class="primary" (click)="openNew()">Add employee</button>
+</div>
+
+<form class="panel filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+  <div class="filter-fields">
+    <label>Name <input type="search" formControlName="name" placeholder="Search by name"></label>
+    <label>Department <input formControlName="department" placeholder="Any department"></label>
+    <label>Country
+      <select formControlName="country">
+        <option value="">All countries</option>
+        @for (country of countries; track country.value) {
+          <option [value]="country.value">{{ country.label }}</option>
+        }
+      </select>
+    </label>
+    <label>Status
+      <select formControlName="status">
+        <option value="">All statuses</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </label>
+    <label>Salary currency
+      <select formControlName="currency" [attr.aria-invalid]="!!rangeErrors['currency']">
+        <option value="">All currencies</option>
+        @for (currency of currencies; track currency) { <option [value]="currency">{{ currency }}</option> }
+      </select>
+      @if (rangeErrors['currency']) { <span class="field-error">{{ rangeErrors['currency'] }}</span> }
+    </label>
+    <label>Minimum salary
+      <input inputmode="decimal" formControlName="minSalary" [attr.aria-invalid]="!!rangeErrors['minSalary']">
+      @if (rangeErrors['minSalary']) { <span class="field-error">{{ rangeErrors['minSalary'] }}</span> }
+    </label>
+    <label>Maximum salary
+      <input inputmode="decimal" formControlName="maxSalary" [attr.aria-invalid]="!!rangeErrors['maxSalary']">
+      @if (rangeErrors['maxSalary']) { <span class="field-error">{{ rangeErrors['maxSalary'] }}</span> }
+    </label>
+    <div class="filter-actions">
+      <button type="submit" class="primary">Apply filters</button>
+      <button type="button" (click)="clearFilters()">Clear</button>
+    </div>
+  </div>
+</form>
+
+@if (notice) { <p class="notice" role="status">{{ notice }}</p> }
+<section class="panel results" aria-label="Employee results" [attr.aria-busy]="loading">
+  @if (loading) {
+    <p class="empty" role="status">Loading employees…</p>
+  } @else if (listError) {
+    <div class="empty" role="alert">{{ listError }} <button type="button" (click)="load()">Retry</button></div>
+  } @else if (page?.content.length) {
+    <salary-table [config]="config" [rows]="rows" (viewEmployee)="openEmployee($event, 'view')"
+                  (editEmployee)="openEmployee($event, 'edit')" (deactivateEmployee)="openDeactivation($event)"></salary-table>
+    <div class="pagination" aria-label="Employee pages">
+      <span>{{ page.page * page.size + 1 }}–{{ page.page * page.size + page.content.length }} of {{ page.totalElements | number }} employees</span>
+      <div>
+        <button type="button" [disabled]="page.page === 0" (click)="load(page.page - 1)">Previous</button>
+        <button type="button" [disabled]="page.page + 1 >= page.totalPages" (click)="load(page.page + 1)">Next</button>
+      </div>
+    </div>
+  } @else {
+    <p class="empty" role="status">No employees match these filters.</p>
+  }
+</section>
+
+<dialog #editor aria-labelledby="employee-dialog-title" (cancel)="$event.preventDefault(); closeEditor()">
+  <div class="dialog-heading">
+    <h2 id="employee-dialog-title">
+      {{ mode === 'new' ? 'Add employee' : mode === 'edit' ? 'Edit employee' : 'Employee details' }}
+    </h2>
+    <button type="button" [disabled]="saving" (click)="closeEditor()">Close</button>
+  </div>
+  @if (editorError) {
+    <p class="alert" role="alert">{{ editorError }}</p>
+    @if (stale && selected) {
+      <button type="button" (click)="openEmployee(selected, mode === 'view' ? 'view' : 'edit')">Reload latest record</button>
+    }
+  }
+  @if (detailsLoading) {
+    <p role="status">Loading employee…</p>
+  } @else if (mode === 'view' && selected && !stale) {
+    <dl class="details">
+      <div><dt>Employee code</dt><dd>{{ selected.employeeCode }}</dd></div>
+      <div><dt>Name</dt><dd>{{ selected.firstName }} {{ selected.lastName }}</dd></div>
+      <div><dt>Email</dt><dd>{{ selected.email }}</dd></div>
+      <div><dt>Department</dt><dd>{{ selected.department }}</dd></div>
+      <div><dt>Job title</dt><dd>{{ selected.jobTitle }}</dd></div>
+      <div><dt>Country</dt><dd>{{ selected.countryCode }}</dd></div>
+      <div><dt>Status</dt><dd>{{ selected.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</dd></div>
+      <div><dt>Annual gross base salary</dt><dd>{{ formatSalary(selected.annualGrossBaseSalary, selected.currencyCode) }}</dd></div>
+    </dl>
+  } @else if (mode !== 'view') {
+    <form [formGroup]="employeeForm" (ngSubmit)="save()" novalidate>
+      <fieldset class="employee-fields" [disabled]="saving || stale">
+        @for (field of fields; track field.name) {
+          <label>
+            {{ field.label }}
+            @if (field.type === 'select') {
+              <select id="employee-country" [formControlName]="field.name" (change)="countryChanged()" required>
+                <option value="">Select country</option>
+                @for (country of countries; track country.value) {
+                  <option [value]="country.value">{{ country.label }}</option>
+                }
+              </select>
+            } @else if (field.name === 'annualGrossBaseSalary') {
+              <input [formControlName]="field.name" inputmode="decimal" maxlength="19" required
+                     [attr.aria-invalid]="!!fieldError(field.name)">
+              @if (salaryCurrency) { <span class="field-help">Salary currency {{ salaryCurrency }}</span> }
+              @if (fieldErrors['currencyCode']) { <span class="field-error">{{ fieldErrors['currencyCode'] }}</span> }
+            } @else {
+              <tui-input [formControlName]="field.name" [inputType]="field.inputType"
+                         [attr.data-field]="field.name"></tui-input>
+            }
+            @if (fieldError(field.name)) { <span class="field-error">{{ fieldError(field.name) }}</span> }
+          </label>
+        }
+      </fieldset>
+      <div class="dialog-actions">
+        <button type="submit" class="primary" [disabled]="saving || stale">{{ saving ? 'Saving…' : 'Save employee' }}</button>
+      </div>
+    </form>
+  }
+</dialog>
+
+<dialog #confirmation class="confirm-host" aria-label="Deactivate employee"
+        (cancel)="$event.preventDefault(); closeDeactivation()">
+  <tui-dialog title="Deactivate employee" [valid]="!saving && !deactivationError"
+              (onHide)="closeDeactivation()" (onSubmit)="deactivate()">
+    @if (pendingDeactivation) {
+      <p>Deactivate {{ pendingDeactivation.firstName }} {{ pendingDeactivation.lastName }} ({{ pendingDeactivation.employeeCode }})?</p>
+      <p>The employee will remain viewable and will be excluded from salary insights.</p>
+      @if (deactivationError) { <p class="alert" role="alert">{{ deactivationError }}</p> }
+      @if (saving) { <p role="status">Deactivating…</p> }
+    }
+  </tui-dialog>
+</dialog>

@@ -1,0 +1,13 @@
+{
+  "title": "By currency",
+  "store": "salarySummary",
+  "tableList": [
+    { "name": "currencyCode", "label": "Currency" },
+    { "name": "employeeCount", "label": "Employees" },
+    { "name": "average", "label": "Average", "pipe": "salary" },
+    { "name": "minimum", "label": "Minimum", "pipe": "salary" },
+    { "name": "maximum", "label": "Maximum", "pipe": "salary" },
+    { "name": "total", "label": "Total", "pipe": "salary" }
+  ],
+  "steps": []
+}

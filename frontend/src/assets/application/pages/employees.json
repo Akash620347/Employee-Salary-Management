@@ -1,0 +1,42 @@
+{
+  "title": "Employees",
+  "store": "employees",
+  "tableList": [
+    { "name": "employeeCode", "label": "Employee code" },
+    { "name": "fullName", "label": "Name" },
+    { "name": "department", "label": "Department" },
+    { "name": "countryCode", "label": "Country" },
+    { "name": "currencyCode", "label": "Currency" },
+    { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "pipe": "salary" },
+    { "name": "status", "label": "Status", "pipe": "status" },
+    { "name": "actions", "label": "Actions", "pipe": "actions" }
+  ],
+  "steps": [
+    {
+      "stepName": "employee",
+      "label": "Employee details",
+      "index": 0,
+      "status": true,
+      "fields": [
+        { "name": "employeeCode", "label": "Employee code", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 20 } },
+        { "name": "firstName", "label": "First name", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 80 } },
+        { "name": "lastName", "label": "Last name", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 80 } },
+        { "name": "email", "label": "Email", "type": "input", "inputType": "email", "validation": { "required": true, "maxLength": 255 } },
+        { "name": "department", "label": "Department", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 100 } },
+        { "name": "jobTitle", "label": "Job title", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 100 } },
+        { "name": "countryCode", "label": "Country", "type": "select", "validation": { "required": true } },
+        { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "type": "input", "inputType": "text", "validation": { "required": true, "maxLength": 19 } }
+      ]
+    }
+  ],
+  "lists": {
+    "countryCode": [
+      { "value": "FR", "label": "France", "currencyCode": "EUR" },
+      { "value": "DE", "label": "Germany", "currencyCode": "EUR" },
+      { "value": "IN", "label": "India", "currencyCode": "INR" },
+      { "value": "SG", "label": "Singapore", "currencyCode": "SGD" },
+      { "value": "GB", "label": "United Kingdom", "currencyCode": "GBP" },
+      { "value": "US", "label": "United States", "currencyCode": "USD" }
+    ]
+  }
+}

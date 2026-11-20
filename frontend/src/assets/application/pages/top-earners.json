@@ -1,0 +1,11 @@
+{
+  "title": "Top earners",
+  "store": "topEarners",
+  "tableList": [
+    { "name": "employeeCode", "label": "Employee code" },
+    { "name": "fullName", "label": "Name" },
+    { "name": "department", "label": "Department" },
+    { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "pipe": "salary" }
+  ],
+  "steps": []
+}
