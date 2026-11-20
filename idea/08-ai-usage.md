@@ -16,6 +16,7 @@ As implementation progresses, replace the template entries below with real promp
 | Date / commit | Task | AI tool / prompt (summary or exact prompt) | What I accepted, changed, or rejected | How I verified |
 | --- | --- | --- | --- | --- |
 | 2026-11-20 | Review requirements and update the design | Codex reviewed `idea/` for a simple Angular design with Taomish JSON rendering and Java service interfaces with direct DTO responses. | Updated the plan and specified validation, precision, and stale-update cases. | Compared the plan with the local Taomish `Page` interface, sample JSON, component module, and `JsonService`. |
+| 2026-11-20 | Implement and verify the demo | Codex implemented the Spring Boot API, PostgreSQL schema and seed, and Angular screens around the existing Taomish components. | Used Java records for API responses, decimal strings across the API, and Angular reactive forms driven by page JSON. | Ran the unit tests, seeded PostgreSQL twice, checked the real API, and exercised the employee and insights screens in headless Chrome. |
 
 ## Decisions to explain in the final review
 

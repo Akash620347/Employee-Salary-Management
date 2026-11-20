@@ -2,7 +2,7 @@
 
 A small, functional web application for **one HR Manager** to manage employee records and understand annual gross base salaries across countries.
 
-**Status:** Requirements and design review.
+**Status:** Local implementation. See the [setup and verification guide](../README.md).
 
 ## Chosen stack
 

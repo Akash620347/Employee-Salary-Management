@@ -5,8 +5,8 @@ Use Angular and TypeScript with the existing Taomish `common-ui-v2` components f
 ## Taomish page rendering
 
 - Put configuration in `assets/application/pages/`. Follow the existing `Page` shape: `title`, `store`, `tableList` for columns, `steps[].fields` for form fields, and `lists` for fixed choices. Use `employees.json` for the employee list and form. The insights route combines the table configurations from `salary-summary.json`, `salary-by-department.json`, and `top-earners.json`.
-- Use `tui-table` for configured columns, `tui-form` for employee fields, `tui-dialog` for deactivation, and the shared loader and badges. Verify the existing table's custom cells and action slots with a salary row before writing the full page. Keep keyboard access, focus restoration, and accessible dialog labels in the integration check.
-- Keep filters, server pagination, validation, and save/deactivate actions in the Angular pages and a small typed API service. Load static metadata with Angular `HttpClient` because Taomish `JsonService` also requests a label dictionary from the Taomish backend. Pass the current API page to the table and disable its built-in pagination so the server owns page boundaries.
+- Use `tui-table`, `tui-input`, `tui-dialog`, and `tui-badges` from `common-ui-v2`. Render employee fields from the JSON in an Angular reactive form so API errors can appear beside each field. Use native dialog elements for focus and keyboard handling.
+- Keep filters, server pagination, validation, and save/deactivate actions in the Angular pages and a small typed API service. Import static page JSON at build time because Taomish `JsonService` also requests a label dictionary from the Taomish backend. Pass the current API page to the table and disable its built-in pagination so the server owns page boundaries.
 
 This excerpt uses the same column and field keys as the Taomish application pages.
 
