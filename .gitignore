@@ -1,0 +1,8 @@
+backend/target/
+frontend/.angular/
+frontend/.taomish/
+frontend/dist/
+frontend/node_modules/
+frontend/tsconfig.local.json
+.local/
+*.log
