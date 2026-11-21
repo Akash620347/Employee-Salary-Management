@@ -83,7 +83,10 @@ export class SalaryApi {
   // Salary endpoints use same-origin HTTP and do not require Taomish's authentication interceptors.
   private readonly http = new HttpClient(inject(HttpBackend));
 
-  employees(filters: Record<string, string>, page: number): Promise<EmployeePage> {
+  employees(filters: Record<string, string>, selections: Record<string, string[]>, page: number): Promise<EmployeePage> {
+    if (Object.keys(selections).length) {
+      return firstValueFrom(this.http.post<EmployeePage>('/api/employees/search', { filters, selections }, { params: { page } }));
+    }
     const query: Record<string, string> = { page: String(page) };
     for (const [field, value] of Object.entries(filters)) {
       if (value.trim()) query[field] = value.trim();
@@ -104,9 +107,18 @@ export class SalaryApi {
     return firstValueFrom(this.http.post<Employee>('/api/employees', fields));
   }
 
-  deactivate(employee: Employee): Promise<Employee> {
-    return firstValueFrom(this.http.patch<Employee>('/api/employees/' + employee.id + '/deactivate',
+  changeStatus(employee: Employee, action: 'reactivate' | 'deactivate'): Promise<Employee> {
+    return firstValueFrom(this.http.patch<Employee>(`/api/employees/${employee.id}/${action}`,
       { version: employee.version }));
+  }
+
+  deleteEmployee(employee: Employee): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`/api/employees/${employee.id}`, { params: { version: employee.version } }));
+  }
+
+  deleteEmployees(employees: Employee[]): Promise<void> {
+    const targets = employees.map(({ id, version }) => ({ id, version }));
+    return firstValueFrom(this.http.post<void>('/api/employees/bulk-delete', { employees: targets }));
   }
 
   summary(): Promise<SalarySummary> {

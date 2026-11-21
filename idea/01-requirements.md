@@ -6,7 +6,7 @@ Replace Excel-based tracking for an organization with **10,000 employees across 
 
 ## In scope — functional requirements
 
-1. **Employees:** List, view, add, edit, and **deactivate** employees (no permanent delete). Keep employee code, name, email, department, job title, country, status, annual gross base salary, and local currency.
+1. **Employees:** List, view, add, edit, deactivate, reactivate, and permanently delete employees. Confirm permanent deletion separately from deactivation. Keep employee code, name, email, department, job title, country, status, annual gross base salary, and local currency.
 2. **Salary:** Create and update the employee's **current annual gross base salary only**. Store the amount precisely and display its currency clearly.
 3. **Search:** Paginated employee list with case-insensitive name search and department, country, status, and salary-range filters. A salary-range filter must specify a currency to avoid comparing unlike amounts.
 4. **Insights:** Display employee count and useful annual-salary summaries: average, minimum, maximum, and total by currency and department; highest-paid employees **within a selected currency**. No conversions between currencies.

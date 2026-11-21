@@ -1,13 +1,23 @@
 {
   "title": "Employees",
   "store": "employees",
+  "getAllDataInColumnFilterApi": "/api/employees/filter-options",
   "tableList": [
-    { "name": "fullName", "label": "Employee", "pipe": "employeeIdentity" },
-    { "name": "department", "label": "Department" },
-    { "name": "countryCode", "label": "Country" },
-    { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "pipe": "salary" },
-    { "name": "status", "label": "Status", "pipe": "status" },
-    { "name": "actions", "label": "Actions", "pipe": "actions" }
+    {
+      "name": "actions",
+      "label": "Actions",
+      "pipe": "actions",
+      "style": { "position": "sticky", "left": 0, "z-index": 2, "background-color": "var(--surface)" }
+    },
+    { "name": "fullName", "label": "Name", "pipe": "employeeIdentity", "columnFilter": true, "getAllDataInColFilter": true },
+    { "name": "employeeCode", "label": "Employee code", "columnFilter": true, "getAllDataInColFilter": true },
+    { "name": "email", "label": "Email", "columnFilter": true, "getAllDataInColFilter": true },
+    { "name": "department", "label": "Department", "columnFilter": true, "getAllDataInColFilter": true },
+    { "name": "jobTitle", "label": "Job title", "columnFilter": true, "getAllDataInColFilter": true },
+    { "name": "countryCode", "label": "Country", "columnFilter": true },
+    { "name": "currencyCode", "label": "Currency", "columnFilter": true },
+    { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "pipe": "salaryAmount", "columnFilter": true, "showDataRange": true },
+    { "name": "status", "label": "Status", "pipe": "status", "columnFilter": true }
   ],
   "steps": [
     {

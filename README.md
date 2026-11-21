@@ -43,7 +43,7 @@ npm --prefix frontend run build
 npm --prefix frontend run check:ui
 ```
 
-Run the API and browser checks against the running demo with the seed loaded. Both create synthetic test employees and deactivate them as part of the workflow. The browser check uses Chrome on Windows and saves screenshots under `.local`. Set `CHROME_PATH` if Chrome is installed at a different path.
+Run the API and browser checks against the running demo with the seed loaded. Both create synthetic test employees and exercise deactivation, reactivation, and permanent deletion. The browser check uses Chrome on Windows and saves screenshots under `.local`. Set `CHROME_PATH` if Chrome is installed at a different path.
 
 For a hosted demo, build Angular with `npm --prefix frontend run build -- --configuration production`. Serve `frontend/dist/browser` with an `index.html` fallback for Angular routes, and route `/api` to Spring Boot on the same origin. The build machine needs access to an authorized Taomish checkout and its dependencies.
 

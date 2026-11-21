@@ -7,9 +7,11 @@ import com.acme.salary.dto.EmployeeResponse;
 import com.acme.salary.entity.Employee;
 import com.acme.salary.interfaces.EmployeeService;
 import com.acme.salary.repository.EmployeeRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 class EmployeeServiceTest {
     private final EmployeeRepository repository = mock(EmployeeRepository.class);
-    private final EmployeeService service = new DefaultEmployeeService(repository);
+    private final EmployeeService service = new DefaultEmployeeService(repository, mock(EntityManager.class));
 
     @Test
     void normalizesNewEmployeeAndPreservesSalaryCents() {
@@ -64,11 +66,11 @@ class EmployeeServiceTest {
 
     @Test
     void validatesSalaryRangeBeforeQuerying() {
-        var noCurrency = new EmployeeFilter(null, null, null, null, null, "10", null);
-        var reversed = new EmployeeFilter(null, null, null, null, "EUR", "25", "10");
+        var noCurrency = new EmployeeFilter(null, null, null, null, null, "10", null, null, null, null);
+        var reversed = new EmployeeFilter(null, null, null, null, "EUR", "25", "10", null, null, null);
 
-        assertThatThrownBy(() -> service.list(noCurrency, 0, 20)).isInstanceOf(ApiException.Invalid.class);
-        assertThatThrownBy(() -> service.list(reversed, 0, 20)).isInstanceOf(ApiException.Invalid.class);
+        assertThatThrownBy(() -> service.list(noCurrency, Map.of(), 0, 20)).isInstanceOf(ApiException.Invalid.class);
+        assertThatThrownBy(() -> service.list(reversed, Map.of(), 0, 20)).isInstanceOf(ApiException.Invalid.class);
         verifyNoInteractions(repository);
     }
 

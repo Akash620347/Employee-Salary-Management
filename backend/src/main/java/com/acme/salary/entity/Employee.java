@@ -53,8 +53,8 @@ public class Employee {
         updatedAt = Instant.now();
     }
 
-    public void deactivate() {
-        status = Status.INACTIVE;
+    public void changeStatus(Status status) {
+        this.status = status;
         updatedAt = Instant.now();
     }
 

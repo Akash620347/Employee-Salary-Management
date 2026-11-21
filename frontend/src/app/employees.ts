@@ -1,10 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormRecord, Validators } from '@angular/forms';
-import { DialogComponent } from '@taomish-ui/common-ui-v2';
+import { DialogComponent, SearchCriteria, ToastService } from '@taomish-ui/common-ui-v2';
 import pageConfig from '../assets/application/pages/employees.json';
+import { ConfiguredTable } from './configured-table';
 import { Employee, EmployeeFields, EmployeePage, SalaryApi, amountPattern, apiError,
   cents, countries, currencies, formatSalary } from './salary-api';
+
+type EmployeeAction = 'Reactivate' | 'Deactivate' | 'Permanently delete';
+type EmployeeConfirmation = { employee: Employee; action: EmployeeAction }
+  | { employees: Employee[]; action: 'Delete selected' };
 
 @Component({
   standalone: false,
@@ -17,37 +22,40 @@ export class EmployeesComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   @ViewChild('editor', { static: true }) private editor!: ElementRef<HTMLDialogElement>;
   @ViewChild('confirmation', { static: true }) private confirmation!: ElementRef<HTMLDialogElement>;
-  @ViewChild('salaryFilters', { static: true }) private salaryFilters!: ElementRef<HTMLDetailsElement>;
   @ViewChild(DialogComponent, { static: true }) private sharedDialog!: DialogComponent;
+  @ViewChild(ConfiguredTable, { static: true }) table!: ConfiguredTable;
 
-  readonly config = pageConfig;
+  private readonly filterOptions: Record<string, { value: string; label: string }[]> = {
+    countryCode: countries,
+    currencyCode: currencies.map(code => ({ value: code, label: code })),
+    status: [{ value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }],
+  };
+  readonly config = {
+    ...pageConfig,
+    tableList: pageConfig.tableList.map(column => ({ ...column, fixedValueOptions: this.filterOptions[column.name] })),
+  };
   readonly countries = countries;
-  readonly currencies = currencies;
   readonly fields = pageConfig.steps[0].fields;
   readonly formatSalary = formatSalary;
-  readonly filters = this.formBuilder.group({
-    name: '', department: '', country: '', status: '', currency: '', minSalary: '', maxSalary: '',
-  });
   readonly employeeForm = new FormRecord<FormControl<string>>({});
-  private appliedFilters = this.filters.getRawValue();
+  private appliedFilters: Record<string, string> = {};
+  private appliedSelections: Record<string, string[]> = {};
   private listRequest = 0;
   private detailRequest = 0;
 
   page: EmployeePage | null = null;
   rows: Array<Employee & { fullName: string }> = [];
+  readonly selectedEmployeeIds = new Set<number>();
   loading = false;
-  listError = '';
-  rangeErrors: Record<string, string> = {};
-  notice = '';
+  listFailed = false;
 
   mode: 'new' | 'edit' | 'view' = 'new';
   selected: Employee | null = null;
-  pendingDeactivation: Employee | null = null;
+  pendingConfirmation: EmployeeConfirmation | null = null;
   detailsLoading = false;
   saving = false;
   stale = false;
-  editorError = '';
-  deactivationError = '';
+  confirmationFailed = false;
   fieldErrors: Record<string, string> = {};
 
   ngOnInit(): void {
@@ -62,13 +70,14 @@ export class EmployeesComponent implements OnInit {
 
   async load(index = this.page?.page ?? 0): Promise<void> {
     const request = ++this.listRequest;
+    this.selectedEmployeeIds.clear();
     this.loading = true;
-    this.listError = '';
+    this.listFailed = false;
     try {
-      let page = await this.api.employees(this.appliedFilters, index);
+      let page = await this.api.employees(this.appliedFilters, this.appliedSelections, index);
       if (request !== this.listRequest) return;
       const lastPage = Math.max(0, page.totalPages - 1);
-      if (index > lastPage) page = await this.api.employees(this.appliedFilters, lastPage);
+      if (index > lastPage) page = await this.api.employees(this.appliedFilters, this.appliedSelections, lastPage);
       if (request !== this.listRequest) return;
       this.page = page;
       this.rows = page.content.map(employee => ({
@@ -77,7 +86,8 @@ export class EmployeesComponent implements OnInit {
       }));
     } catch (error) {
       if (request !== this.listRequest) return;
-      this.listError = apiError(error, 'Employees could not be loaded.').message;
+      this.listFailed = true;
+      ToastService.addErrorMessage('Employees', apiError(error, 'Employees could not be loaded.').message);
     } finally {
       if (request === this.listRequest) {
         this.loading = false;
@@ -86,33 +96,43 @@ export class EmployeesComponent implements OnInit {
     }
   }
 
-  applyFilters(): void {
-    this.rangeErrors = {};
-    const filters = this.filters.getRawValue();
-    const minimum = filters.minSalary.trim();
-    const maximum = filters.maxSalary.trim();
-    if (minimum && !amountPattern.test(minimum)) this.rangeErrors['minSalary'] = 'Enter a valid amount.';
-    if (maximum && !amountPattern.test(maximum)) this.rangeErrors['maxSalary'] = 'Enter a valid amount.';
-    if ((minimum || maximum) && !filters.currency) this.rangeErrors['currency'] = 'Choose a currency.';
-    if (!Object.keys(this.rangeErrors).length && minimum && maximum && cents(maximum) < cents(minimum)) {
-      this.rangeErrors['maxSalary'] = 'Maximum must be at least the minimum.';
+  applyFilters(criteria: SearchCriteria[]): void {
+    const values = new Map(criteria.map(filter => [filter.fieldName, filter]));
+    const filters: Record<string, string> = {};
+    const selections: Record<string, string[]> = {};
+    const queryNames = { fullName: 'name', employeeCode: 'employeeCode', email: 'email', department: 'department',
+      jobTitle: 'jobTitle', countryCode: 'country', currencyCode: 'currency', status: 'status' };
+    for (const [column, parameter] of Object.entries(queryNames)) {
+      const value = values.get(column)?.value;
+      if (typeof value === 'string' && value) filters[parameter] = value;
+      if (Array.isArray(value) && value.length) selections[column] = [...value];
     }
-    if (Object.keys(this.rangeErrors).length) {
-      this.salaryFilters.nativeElement.open = true;
-      return;
+    const range = values.get('annualGrossBaseSalary');
+    if (range && !filters['currency']) {
+      this.table.clearColumnFilter(range.fieldName);
+      ToastService.addWarningMessage('Salary filter', 'Choose a currency before applying a salary range.');
+    } else if (range) {
+      filters['minSalary'] = String(range.value);
+      filters['maxSalary'] = String(range.secondValue);
     }
     this.appliedFilters = filters;
+    this.appliedSelections = selections;
     void this.load(0);
   }
 
-  get hasSalaryFilters(): boolean {
-    const { currency, minSalary, maxSalary } = this.appliedFilters;
-    return Boolean(currency || minSalary.trim() || maxSalary.trim());
+  get hasFilters(): boolean {
+    return Object.keys(this.appliedFilters).length > 0 || Object.keys(this.appliedSelections).length > 0;
   }
 
-  clearFilters(): void {
-    this.filters.reset();
-    this.applyFilters();
+  goToPage(input: HTMLInputElement): void {
+    if (this.loading || !this.page) return;
+    const number = input.valueAsNumber;
+    if (!Number.isInteger(number) || number < 1 || number > this.page.totalPages) {
+      ToastService.addWarningMessage('Go to page', `Enter a whole page number from 1 to ${this.page.totalPages}.`);
+      input.select();
+      return;
+    }
+    if (number !== this.page.page + 1) void this.load(number - 1);
   }
 
   openNew(): void {
@@ -140,7 +160,7 @@ export class EmployeesComponent implements OnInit {
       ])));
     } catch (error) {
       if (request !== this.detailRequest) return;
-      this.editorError = apiError(error, 'Employee details could not be loaded.').message;
+      ToastService.addErrorMessage('Employee details', apiError(error, 'Employee details could not be loaded.').message);
       this.stale = true;
     } finally {
       if (request === this.detailRequest) {
@@ -172,27 +192,31 @@ export class EmployeesComponent implements OnInit {
 
   async save(): Promise<void> {
     if (this.saving || this.detailsLoading || this.stale) return;
-    this.editorError = '';
     this.fieldErrors = {};
     this.employeeForm.markAllAsTouched();
-    if (this.employeeForm.invalid) return;
+    const invalidField = this.fields.find(field => this.employeeForm.controls[field.name].invalid);
+    if (invalidField) {
+      ToastService.addWarningMessage(invalidField.label, this.fieldError(invalidField.name));
+      return;
+    }
     const fields = this.employeeForm.getRawValue() as Omit<EmployeeFields, 'currencyCode'>;
     const salary = fields.annualGrossBaseSalary.trim();
     if (!amountPattern.test(salary) || cents(salary) <= 0n) {
       this.fieldErrors['annualGrossBaseSalary'] = 'Enter a positive amount with up to two decimal places.';
+      ToastService.addWarningMessage('Annual gross base salary', this.fieldErrors['annualGrossBaseSalary']);
       return;
     }
     this.saving = true;
     try {
       const created = this.mode === 'new';
       const result = await this.api.save({ ...fields, currencyCode: this.salaryCurrency, annualGrossBaseSalary: salary }, this.selected);
-      this.notice = (created ? 'Added ' : 'Saved ') + result.employeeCode + '.';
       this.editor.nativeElement.close();
+      ToastService.addSuccessMessage('Employee', (created ? 'Added ' : 'Saved ') + result.employeeCode + '.');
       void this.load();
     } catch (error) {
       const failure = apiError(error, 'The employee could not be saved.');
-      this.editorError = failure.message;
       this.fieldErrors = failure.fieldErrors ?? {};
+      ToastService.addErrorMessage(failure.message, Object.values(this.fieldErrors).join(' '));
       this.stale = this.selected != null && error instanceof HttpErrorResponse &&
         (error.status === 404 || (error.status === 409 && !Object.keys(this.fieldErrors).length));
     } finally {
@@ -207,29 +231,64 @@ export class EmployeesComponent implements OnInit {
     this.editor.nativeElement.close();
   }
 
-  openDeactivation(employee: Employee): void {
-    this.pendingDeactivation = employee;
-    this.deactivationError = '';
-    this.sharedDialog.showDialog('Deactivate');
+  openConfirmation(employee: Employee, action: EmployeeAction = employee.status === 'INACTIVE' ? 'Reactivate' : 'Deactivate'): void {
+    this.showConfirmation({ employee, action });
+  }
+
+  toggleEmployeeSelection(id: number): void {
+    if (this.loading || this.saving) return;
+    if (this.selectedEmployeeIds.has(id)) this.selectedEmployeeIds.delete(id);
+    else this.selectedEmployeeIds.add(id);
+  }
+
+  openBulkDelete(): void {
+    if (this.loading || !this.selectedEmployeeIds.size) return;
+    const employees = this.rows.filter(employee => this.selectedEmployeeIds.has(employee.id));
+    this.showConfirmation({ employees, action: 'Delete selected' });
+  }
+
+  get confirmationTitle(): string {
+    const action = this.pendingConfirmation?.action;
+    if (!action) return '';
+    return action === 'Delete selected' ? 'Permanently delete selected employees' : `${action} employee`;
+  }
+
+  private showConfirmation(pending: EmployeeConfirmation): void {
+    if (this.saving) return;
+    this.pendingConfirmation = pending;
+    this.confirmationFailed = false;
+    this.sharedDialog.showDialog(pending.action);
     this.confirmation.nativeElement.showModal();
   }
 
-  closeDeactivation(): void {
+  closeConfirmation(): void {
     this.confirmation.nativeElement.close();
     this.sharedDialog.hideDialog();
-    this.pendingDeactivation = null;
+    this.pendingConfirmation = null;
   }
 
-  async deactivate(): Promise<void> {
-    if (this.saving || !this.pendingDeactivation || this.deactivationError) return;
-    const employee = this.pendingDeactivation;
+  async confirmEmployeeAction(): Promise<void> {
+    if (this.saving || !this.pendingConfirmation || this.confirmationFailed) return;
+    const pending = this.pendingConfirmation;
+    const title = this.confirmationTitle;
     this.saving = true;
     try {
-      await this.api.deactivate(employee);
-      this.notice = 'Deactivated ' + employee.employeeCode + '.';
-      this.closeDeactivation();
+      let message: string;
+      if (pending.action === 'Delete selected') {
+        await this.api.deleteEmployees(pending.employees);
+        const count = pending.employees.length;
+        message = `Permanently deleted ${count} ${count === 1 ? 'employee' : 'employees'}.`;
+      } else {
+        const { employee, action } = pending;
+        if (action === 'Permanently delete') await this.api.deleteEmployee(employee);
+        else await this.api.changeStatus(employee, action === 'Reactivate' ? 'reactivate' : 'deactivate');
+        message = `${action}d ${employee.employeeCode}.`;
+      }
+      this.closeConfirmation();
+      ToastService.addSuccessMessage('Employees', message);
     } catch (error) {
-      this.deactivationError = apiError(error, 'Deactivation could not be completed.').message;
+      this.confirmationFailed = true;
+      ToastService.addErrorMessage(title, apiError(error, 'The employee records could not be updated.').message);
     } finally {
       this.saving = false;
       void this.load();
@@ -239,7 +298,6 @@ export class EmployeesComponent implements OnInit {
 
   private clearEditor(): void {
     this.fieldErrors = {};
-    this.editorError = '';
     this.stale = false;
     this.detailsLoading = false;
   }

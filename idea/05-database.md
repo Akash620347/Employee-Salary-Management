@@ -44,4 +44,4 @@ Liquibase applies `db/changelog/002-seed-employees.sql` to insert **exactly 10,0
 
 ## Data consistency
 
-CRUD updates are transactional. Use `@Version` for a clean conflict response (`409`) if the same employee is updated from two stale forms. Deactivation updates status; do not delete rows. Do not add a salary-history table because only the current salary is in scope.
+CRUD updates are transactional. Use `@Version` for a clean conflict response (`409`) if the same record changes before an update or deletion. Deactivation updates the status. Permanent deletion removes the row through the separate delete action. Only the current salary is in scope.

@@ -8,7 +8,7 @@ async function request(path, status = 200, method = 'GET', body) {
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const result = await response.json();
+  const result = response.status === 204 ? undefined : await response.json();
   assert.equal(response.status, status, method + ' ' + path + ': ' + JSON.stringify(result));
   return result;
 }
@@ -19,6 +19,17 @@ assert.ok(firstPage.totalElements >= 10000, 'Run the employee seed before checki
 const secondPage = await request('/employees?page=1');
 assert.equal(secondPage.page, 1);
 assert.notEqual(secondPage.content[0].id, firstPage.content[0].id);
+const laterEmployees = (await request('/employees?page=29')).content.slice(0, 2);
+const codeOptions = await request('/employees/filter-options?fieldName=employeeCode', 200, 'POST', []);
+const nameOptions = await request('/employees/filter-options?fieldName=fullName', 200, 'POST', []);
+assert.equal(codeOptions.length, new Set(codeOptions).size);
+assert.ok(laterEmployees.every(employee => codeOptions.includes(employee.employeeCode) &&
+  nameOptions.includes(employee.firstName + ' ' + employee.lastName)));
+const matches = await request('/employees/search', 200, 'POST', {
+  filters: {}, selections: { employeeCode: laterEmployees.map(employee => employee.employeeCode) },
+});
+assert.deepEqual(matches.content.map(employee => employee.id), laterEmployees.map(employee => employee.id));
+await request('/employees/filter-options?fieldName=version', 400, 'POST', []);
 assert.equal((await request('/employees?page=9999')).content.length, 0);
 await request('/employees?minSalary=10', 400);
 await request('/employees?currency=USD&minSalary=20&maxSalary=10', 400);
@@ -79,11 +90,46 @@ try {
   await request(path, 409, 'PUT', { ...drafts[0], version: first.version });
   assert.ok((await request('/insights/top-earners?currency=EUR')).every(employee => employee.id !== first.id));
   assert.equal((await request('/employees?' + new URLSearchParams({ status: 'INACTIVE', department }))).content[0].id, first.id);
+
+  await request(path + '/reactivate', 400, 'PATCH', {});
+  await request(path + '/reactivate', 409, 'PATCH', { version: updated.version });
+  const reactivated = await request(path + '/reactivate', 200, 'PATCH', { version: first.version });
+  created[0] = reactivated;
+  assert.deepEqual(reactivated, { ...first, status: 'ACTIVE', version: first.version + 1 });
+  assert.deepEqual(await request(path + '/reactivate', 200, 'PATCH', { version: reactivated.version }), reactivated);
+  assert.equal((await request('/employees?' + new URLSearchParams({ status: 'INACTIVE', department }))).totalElements, 0);
+  assert.ok((await request('/insights/top-earners?currency=EUR')).some(employee => employee.id === first.id));
+
   const summary = await request('/insights/summary');
   assert.equal(summary.activeEmployeeCount, summary.byCurrency.reduce((count, group) => count + group.employeeCount, 0));
-  console.log('Passed employee lifecycle, validation, pagination, exact decimals and currency insights.');
+
+  await request(path, 400, 'DELETE');
+  await request(path + '?version=' + first.version, 409, 'DELETE');
+  assert.deepEqual(await request(path), reactivated);
+  await request(path + '?version=' + reactivated.version, 204, 'DELETE');
+  created.shift();
+  await request(path, 404);
+  await request(path + '/reactivate', 404, 'PATCH', { version: reactivated.version });
+  assert.equal((await request('/employees?' + new URLSearchParams({ department }))).totalElements, 2);
+  assert.ok((await request('/insights/top-earners?currency=EUR')).every(employee => employee.id !== first.id));
+
+  const active = created[0];
+  const inactive = await request(`/employees/${created[1].id}/deactivate`, 200, 'PATCH', { version: created[1].version });
+  created[1] = inactive;
+  const targets = created.map(({ id, version }) => ({ id, version }));
+  const bulkPath = '/employees/bulk-delete';
+  await request(bulkPath, 400, 'POST', { employees: [] });
+  await request(bulkPath, 400, 'POST', { employees: [targets[0], targets[0]] });
+  await request(bulkPath, 409, 'POST', { employees: [targets[0], { ...targets[1], version: inactive.version - 1 }] });
+  assert.deepEqual(await request(`/employees/${active.id}`), active);
+  assert.deepEqual(await request(`/employees/${inactive.id}`), inactive);
+  await request(bulkPath, 204, 'POST', { employees: targets });
+  created.length = 0;
+  for (const { id } of targets) await request(`/employees/${id}`, 404);
+  assert.equal((await request('/employees?' + new URLSearchParams({ department }))).totalElements, 0);
+  console.log('Passed employee lifecycle, individual and bulk deletion, validation, pagination, decimals and insights.');
 } finally {
-  for (const employee of created.filter(employee => employee.status === 'ACTIVE')) {
-    await request('/employees/' + employee.id + '/deactivate', 200, 'PATCH', { version: employee.version });
+  for (const employee of created) {
+    await request(`/employees/${employee.id}?version=${employee.version}`, 204, 'DELETE');
   }
 }

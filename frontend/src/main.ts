@@ -1,10 +1,11 @@
-import { Component, NgModule } from '@angular/core';
+import { Component, DestroyRef, ElementRef, NgModule, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { RouterModule } from '@angular/router';
 import { CommonUiModule, DefaultStoreService, Environment, RoleAuthorizationService,
-  StoreService } from '@taomish-ui/common-ui-v2';
+  StoreService, ToastService } from '@taomish-ui/common-ui-v2';
 import { ConfiguredTable } from './app/configured-table';
 import { EmployeesComponent } from './app/employees';
 import { InsightsComponent } from './app/insights';
@@ -32,9 +33,25 @@ import { InsightsComponent } from './app/insights';
       </aside>
       <main id="main-content" tabindex="-1"><router-outlet></router-outlet></main>
     </div>
+    <tui-toast #notifications popover="manual" aria-live="polite" width="min(23rem, calc(100vw - 40px))"></tui-toast>
   `,
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  @ViewChild('notifications', { read: ElementRef, static: true }) private notifications!: ElementRef<HTMLElement>;
+
+  ngOnInit(): void {
+    ToastService.registerType('success', 'assets/icon/tick-in-square-box.svg', '#08756c');
+    ToastService.registerType('warn', 'assets/icon/alert.svg', '#d29425');
+    ToastService.registerType('error', 'assets/icon/crossIcon.svg', '#a3313c');
+    ToastService.getUpdater().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      // Bring notifications above any open native modal dialog.
+      const host = this.notifications.nativeElement;
+      if (host.matches(':popover-open')) host.hidePopover();
+      host.showPopover();
+    });
+  }
+}
 
 @NgModule({
   imports: [
