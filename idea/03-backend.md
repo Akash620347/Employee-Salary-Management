@@ -1,29 +1,40 @@
 # Backend Plan — Java / Spring Boot
 
-## Package structure (small and feature-focused)
+## Package structure
 
 ```text
 com.acme.salary
-  employee/
-    Employee.java
-    EmployeeRepository.java
-    EmployeeService.java
-    DefaultEmployeeService.java
+  controller/
+    ApiExceptionHandler.java
     EmployeeController.java
+    InsightController.java
+  services/
+    DefaultEmployeeService.java
+    DefaultInsightService.java
+  interfaces/
+    EmployeeService.java
+    InsightService.java
+  repository/
+    EmployeeRepository.java
+    EmployeeSpecifications.java
+    InsightRepository.java
+  entity/
+    Employee.java
+  dto/
+    ApiError.java
+    DeactivationRequest.java
+    EmployeeFilter.java
     EmployeeRequest.java
     EmployeeResponse.java
-  insight/
-    InsightController.java
-    InsightService.java
-    DefaultInsightService.java
-    InsightRepository.java
     InsightResponse.java
   common/
-    ApiExceptionHandler.java
-    ApiError.java
+    ApiException.java
+    SalaryRules.java
 ```
 
 Use one service interface and one implementation per feature. Keep the controllers focused on HTTP mapping, and use records for request and response DTOs.
+
+Configure PostgreSQL, JPA, Liquibase, and the HTTP listener in `backend/src/main/resources/application.yml`. Set the database credentials through environment variables.
 
 ## Required endpoints
 

@@ -1,7 +1,9 @@
-package com.acme.salary.employee;
+package com.acme.salary.repository;
 
 import com.acme.salary.common.ApiException;
 import com.acme.salary.common.SalaryRules;
+import com.acme.salary.dto.EmployeeFilter;
+import com.acme.salary.entity.Employee;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -10,16 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public record EmployeeFilter(String name, String department, String country, Employee.Status status,
-                             String currency, String minSalary, String maxSalary) {
+public final class EmployeeSpecifications {
+    private EmployeeSpecifications() {}
 
-    Specification<Employee> specification() {
-        String search = trim(name).toLowerCase(Locale.ROOT);
-        String departmentName = trim(department).toLowerCase(Locale.ROOT);
-        String countryCode = trim(country).isEmpty() ? "" : SalaryRules.country(country, "country");
-        String currencyCode = trim(currency).isEmpty() ? "" : SalaryRules.currency(currency, "currency");
-        BigDecimal minimum = bound(minSalary, "minSalary");
-        BigDecimal maximum = bound(maxSalary, "maxSalary");
+    public static Specification<Employee> matching(EmployeeFilter filter) {
+        String search = trim(filter.name()).toLowerCase(Locale.ROOT);
+        String departmentName = trim(filter.department()).toLowerCase(Locale.ROOT);
+        String countryCode = trim(filter.country()).isEmpty() ? "" : SalaryRules.country(filter.country(), "country");
+        String currencyCode = trim(filter.currency()).isEmpty() ? "" : SalaryRules.currency(filter.currency(), "currency");
+        BigDecimal minimum = bound(filter.minSalary(), "minSalary");
+        BigDecimal maximum = bound(filter.maxSalary(), "maxSalary");
         if ((minimum != null || maximum != null) && currencyCode.isEmpty()) {
             throw new ApiException.Invalid("currency", "Choose a currency for the salary range.");
         }
@@ -38,7 +40,7 @@ public record EmployeeFilter(String name, String department, String country, Emp
                 conditions.add(builder.equal(builder.lower(employee.get("department")), departmentName));
             }
             if (!countryCode.isEmpty()) conditions.add(builder.equal(employee.get("countryCode"), countryCode));
-            if (status != null) conditions.add(builder.equal(employee.get("status"), status));
+            if (filter.status() != null) conditions.add(builder.equal(employee.get("status"), filter.status()));
             if (!currencyCode.isEmpty()) conditions.add(builder.equal(employee.get("currencyCode"), currencyCode));
             if (minimum != null) conditions.add(builder.ge(employee.get("annualGrossBaseSalary"), minimum));
             if (maximum != null) conditions.add(builder.le(employee.get("annualGrossBaseSalary"), maximum));

@@ -2,6 +2,8 @@
 
 Angular, Spring Boot, and PostgreSQL demo for managing employee records and reviewing annual gross base salaries. Use synthetic records for this assessment demo.
 
+Run `start-app.bat` to start PostgreSQL, the backend, and Angular. The launcher uses the `postgresql-x64-17` Windows service and waits for PostgreSQL on port `5432`. If Windows prompts for administrator approval to start the service, approve it. The launcher connects as `salary_app` to `salary_management` and reads the database password from the ignored `.local/database.bat` file or the `DATABASE_PASSWORD` environment variable. Open `http://127.0.0.1:4200/employees`.
+
 ## Backend
 
 Install Java 21, Maven, and PostgreSQL. Create a PostgreSQL database named `salary_management` owned by your application role. Set the connection details in the terminal that starts Spring Boot.
@@ -14,11 +16,9 @@ Set-Location backend
 mvn spring-boot:run
 ```
 
-Flyway creates the schema at startup. From another terminal in the project root, load the demo records after startup.
+On first startup, Liquibase creates the employee table and loads 10,000 synthetic employees into an empty database. Liquibase records both changesets in `databasechangelog`, so later restarts skip them.
 
-```powershell
-psql -h localhost -U salary_app -d salary_management -v ON_ERROR_STOP=1 -f backend/scripts/seed_employees.sql
-```
+The backend reads `backend/src/main/resources/application.yml`. Set `SERVER_ADDRESS` or `PORT` to override the default listener at `127.0.0.1:8080`. If you change the port for local development, update the Angular proxy target in `frontend/proxy.conf.json` to match.
 
 ## Angular
 

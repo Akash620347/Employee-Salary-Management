@@ -7,8 +7,8 @@ At the start of implementation, verify that the Angular build can resolve `commo
 | Step | Deliverable | Example commit message |
 | --- | --- | --- |
 | 1 | Requirements, decisions, and planned tests | `docs: define salary management MVP` |
-| 2 | Spring Boot project, database connection, Flyway schema | `feat: set up backend and employee schema` |
-| 3 | Repeatable 10,000-record seed script | `feat: add deterministic employee seed` |
+| 2 | Spring Boot project, database connection, Liquibase schema | `feat: set up backend and employee schema` |
+| 3 | Liquibase seed changeset for 10,000 synthetic employees | `feat: add deterministic employee seed` |
 | 4 | Employee list/detail/create/update/deactivate APIs + validations | `feat: implement employee management` |
 | 5 | Backend unit and API/repository tests | `test: cover employee workflows` |
 | 6 | Search, filters, pagination, and salary insights APIs | `feat: add employee search and pay insights` |

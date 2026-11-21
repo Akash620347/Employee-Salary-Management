@@ -1,6 +1,6 @@
-package com.acme.salary.insight;
+package com.acme.salary.repository;
 
-import com.acme.salary.employee.Employee;
+import com.acme.salary.entity.Employee;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
@@ -8,7 +8,7 @@ import org.springframework.data.repository.Repository;
 import java.math.BigDecimal;
 import java.util.List;
 
-interface InsightRepository extends Repository<Employee, Long> {
+public interface InsightRepository extends Repository<Employee, Long> {
     interface SalaryGroup {
         String getDepartment();
         String getCurrencyCode();
@@ -37,7 +37,7 @@ interface InsightRepository extends Repository<Employee, Long> {
 
     @Query("""
             SELECT employee FROM Employee employee
-            WHERE employee.status = com.acme.salary.employee.Employee.Status.ACTIVE
+            WHERE employee.status = com.acme.salary.entity.Employee.Status.ACTIVE
               AND employee.currencyCode = :currency
             ORDER BY employee.annualGrossBaseSalary DESC, employee.employeeCode ASC, employee.id ASC
             """)

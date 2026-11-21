@@ -61,9 +61,9 @@ export function cents(amount: string): bigint {
   return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
 }
 
-export function formatSalary(amount: string, currency: string): string {
+export function formatSalary(amount: string, currency: string, showCurrency = true): string {
   return new Intl.NumberFormat('en', {
-    style: 'currency',
+    style: showCurrency ? 'currency' : 'decimal',
     currency,
     currencyDisplay: 'code',
     minimumFractionDigits: 2,

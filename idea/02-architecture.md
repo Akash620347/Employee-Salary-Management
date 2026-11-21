@@ -34,7 +34,7 @@ No microservices, queues, caching, background jobs, or added infrastructure. The
 2. Controller validates query parameters; service applies rules; repository queries PostgreSQL.
 3. Employee create/update/deactivate goes through validated endpoints and a database transaction.
 4. Insights endpoints return database aggregates grouped by currency and department. Angular formats the amounts using the returned currency codes.
-5. The seed script loads reproducible dummy data independently from runtime application behavior.
+5. Liquibase loads reproducible dummy data once during application startup.
 
 ## Practical boundaries
 

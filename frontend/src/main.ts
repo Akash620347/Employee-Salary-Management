@@ -13,16 +13,25 @@ import { InsightsComponent } from './app/insights';
   standalone: false,
   selector: 'salary-app',
   template: `
-    <header class="app-header">
-      <div class="header-inner">
-        <a class="app-name" routerLink="/employees">Salary Management</a>
+    <div class="app-shell">
+      <a class="skip-link" href="#main-content">Skip to content</a>
+      <aside class="app-sidebar">
+        <a class="app-name" routerLink="/employees">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>Salary Management</span>
+        </a>
         <nav aria-label="Main navigation">
-          <a routerLink="/employees" routerLinkActive="selected" ariaCurrentWhenActive="page">Employees</a>
-          <a routerLink="/insights" routerLinkActive="selected" ariaCurrentWhenActive="page">Salary insights</a>
+          <a routerLink="/employees" routerLinkActive="selected" ariaCurrentWhenActive="page">
+            <span class="nav-icon people-icon" aria-hidden="true"></span>Employees
+          </a>
+          <a routerLink="/insights" routerLinkActive="selected" ariaCurrentWhenActive="page">
+            <span class="nav-icon bars-icon" aria-hidden="true"></span>Salary insights
+          </a>
         </nav>
-      </div>
-    </header>
-    <main><router-outlet></router-outlet></main>
+        <p class="workspace-status">Synthetic employee data</p>
+      </aside>
+      <main id="main-content" tabindex="-1"><router-outlet></router-outlet></main>
+    </div>
   `,
 })
 export class AppComponent {}

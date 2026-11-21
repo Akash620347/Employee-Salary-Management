@@ -1,6 +1,9 @@
-package com.acme.salary.employee;
+package com.acme.salary.interfaces;
 
-import com.acme.salary.employee.EmployeeResponse.EmployeePage;
+import com.acme.salary.dto.EmployeeFilter;
+import com.acme.salary.dto.EmployeeRequest;
+import com.acme.salary.dto.EmployeeResponse;
+import com.acme.salary.dto.EmployeeResponse.EmployeePage;
 
 public interface EmployeeService {
     EmployeePage list(EmployeeFilter filter, int page, int size);

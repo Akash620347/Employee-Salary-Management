@@ -1,6 +1,12 @@
-package com.acme.salary.employee;
+package com.acme.salary.services;
 
 import com.acme.salary.common.ApiException;
+import com.acme.salary.dto.EmployeeFilter;
+import com.acme.salary.dto.EmployeeRequest;
+import com.acme.salary.dto.EmployeeResponse;
+import com.acme.salary.entity.Employee;
+import com.acme.salary.interfaces.EmployeeService;
+import com.acme.salary.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -53,7 +59,7 @@ class EmployeeServiceTest {
         assertThatThrownBy(() -> service.update(1, request("25.00", "EUR", 1L)))
                 .isInstanceOf(ApiException.Conflict.class);
         assertThatThrownBy(() -> service.deactivate(1, 1L)).isInstanceOf(ApiException.Conflict.class);
-        assertThat(employee.status()).isEqualTo(Employee.Status.ACTIVE);
+        assertThat(employee.getStatus()).isEqualTo(Employee.Status.ACTIVE);
     }
 
     @Test

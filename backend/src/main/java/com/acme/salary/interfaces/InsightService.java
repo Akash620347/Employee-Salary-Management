@@ -1,4 +1,6 @@
-package com.acme.salary.insight;
+package com.acme.salary.interfaces;
+
+import com.acme.salary.dto.InsightResponse;
 
 import java.util.List;
 

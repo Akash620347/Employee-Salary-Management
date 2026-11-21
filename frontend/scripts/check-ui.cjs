@@ -6,6 +6,7 @@ const CDP = require('chrome-remote-interface');
 
 const artifacts = resolve(__dirname, '../../.local');
 mkdirSync(artifacts, { recursive: true });
+const appUrl = process.env.DEMO_UI_URL ?? 'http://127.0.0.1:4200';
 const port = 49222;
 const chromePath = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const chrome = spawn(chromePath, [
@@ -67,7 +68,7 @@ async function run() {
     await Network.enable();
     await Page.enable();
     await Emulation.setDeviceMetricsOverride({ width: 1366, height: 900, deviceScaleFactor: 1, mobile: false });
-    await Page.navigate({ url: 'http://127.0.0.1:4200/employees' });
+    await Page.navigate({ url: appUrl + '/employees' });
     await waitFor('salary-table tbody tr');
     await textContains('.pagination', '1–20 of');
     const initial = await Page.captureScreenshot({ format: 'png' });
@@ -75,14 +76,17 @@ async function run() {
     await click('.pagination button:last-child');
     await textContains('.pagination', '21–40 of');
 
+    await click('.salary-filters summary');
     await fill('input[formcontrolname="minSalary"]', '100');
     await click('.filters [type="submit"]');
     await textContains('.filters', 'Choose a currency.');
-    await click('.filter-actions button:last-child');
+    await click('.filter-actions .quiet-button');
     await textContains('.pagination', '1–20 of');
 
     await click('.page-heading button');
     await waitFor('dialog[open] tui-input input');
+    const editor = await Page.captureScreenshot({ format: 'png' });
+    writeFileSync(resolve(artifacts, 'employee-dialog.png'), Buffer.from(editor.data, 'base64'));
     await click('dialog[open] [type="submit"]');
     await textContains('dialog[open]', 'This field is required.');
     const stamp = Date.now().toString(36);
@@ -125,10 +129,26 @@ async function run() {
     await fill('section[aria-labelledby="earners-title"] select', 'EUR');
     await textContains('section[aria-labelledby="earners-title"] tbody', 'EUR');
     await waitFor('section[aria-labelledby="department-title"] tbody tr');
+    assert.ok(await evaluate(() => {
+      const table = document.querySelector('[aria-labelledby="summary-title"] .table-section');
+      return table.scrollWidth <= table.clientWidth;
+    }), 'The currency summary should show all columns on a laptop');
     const insights = await Page.captureScreenshot({ format: 'png' });
     writeFileSync(resolve(artifacts, 'insights.png'), Buffer.from(insights.data, 'base64'));
+
+    await Emulation.setDeviceMetricsOverride({ width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    for (const page of ['insights', 'employees']) {
+      if (page === 'employees') await click('.app-sidebar nav a[href="/employees"]');
+      await textContains('h1', page === 'employees' ? 'Employees' : 'Salary insights');
+      await waitFor('salary-table tbody tr');
+      assert.ok(await evaluate(() => document.documentElement.scrollWidth <= 390),
+        page + ' layout should scroll tables inside the page on mobile');
+      await evaluate(() => window.scrollTo(0, 0));
+      const screenshot = await Page.captureScreenshot({ format: 'png' });
+      writeFileSync(resolve(artifacts, page + '-mobile.png'), Buffer.from(screenshot.data, 'base64'));
+    }
     assert.deepEqual(exceptions, []);
-    console.log('Passed Angular filtering, pagination, validation, add, view, edit, deactivate, and insights.');
+    console.log('Passed Angular filtering, pagination, add, view, edit, deactivate, insights, and mobile layout.');
   } catch (error) {
     const state = await client.Runtime.evaluate({ expression: 'document.body.innerText.slice(0, 2000)', returnByValue: true });
     console.log('Browser text:', state.result.value);

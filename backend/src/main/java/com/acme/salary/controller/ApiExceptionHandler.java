@@ -1,5 +1,7 @@
-package com.acme.salary.common;
+package com.acme.salary.controller;
 
+import com.acme.salary.common.ApiException;
+import com.acme.salary.dto.ApiError;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -16,8 +18,6 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
-    public record ApiError(String message, Map<String, String> fieldErrors) {}
-
     @ExceptionHandler(ApiException.Invalid.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ApiError invalid(ApiException.Invalid error) {

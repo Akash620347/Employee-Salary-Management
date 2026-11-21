@@ -2,7 +2,7 @@
 
 ## Database choice
 
-**PostgreSQL.** A single relational table plus a few indexes easily supports 10,000 employee records. Use Flyway SQL migrations so the schema is reproducible. No sharding, read replicas, caching layer, or specialized search service.
+**PostgreSQL.** A single relational table plus a few indexes easily supports 10,000 employee records. Liquibase applies the SQL changesets at startup.
 
 ## `employees` table
 
@@ -32,15 +32,15 @@ Use a fixed sample set of country/currency pairs: `IN/INR`, `US/USD`, `GB/GBP`, 
 - Use a stable default sort (employee code + id) so pages do not shuffle unexpectedly.
 - Review indexes with sample queries before adding more; 10,000 rows does not justify premature tuning.
 
-## Seed script
+## Seed changeset
 
-Create `backend/scripts/seed_employees.sql` to insert **exactly 10,000 synthetic employees** into an empty database.
+Liquibase applies `db/changelog/002-seed-employees.sql` to insert **exactly 10,000 synthetic employees** into an empty database.
 
 - Use deterministic employee codes and reserved example email domains. Seed a fixed set of countries, currencies, departments, and job titles.
 - Plausible but **fake** salary amounts; use no real personal information.
 - Match currency to country. Include different pay bands and a few inactive employees.
 - Verify that the first run against a fresh database inserts 10,000 employees and a second run leaves the count and salaries unchanged. Use `ON CONFLICT DO NOTHING` so the seed preserves existing rows.
-- Keep seeding separate from migrations and from normal application startup.
+- Keep the seed and table definition in separate changesets. Liquibase records each applied changeset.
 
 ## Data consistency
 

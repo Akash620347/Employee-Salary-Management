@@ -1,9 +1,12 @@
-package com.acme.salary.employee;
+package com.acme.salary.controller;
 
-import com.acme.salary.employee.EmployeeResponse.EmployeePage;
+import com.acme.salary.dto.DeactivationRequest;
+import com.acme.salary.dto.EmployeeFilter;
+import com.acme.salary.dto.EmployeeRequest;
+import com.acme.salary.dto.EmployeeResponse;
+import com.acme.salary.dto.EmployeeResponse.EmployeePage;
+import com.acme.salary.interfaces.EmployeeService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -20,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/employees")
 class EmployeeController {
-    record DeactivationRequest(@NotNull @PositiveOrZero Long version) {}
-
     private final EmployeeService employees;
 
     EmployeeController(EmployeeService employees) {

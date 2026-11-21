@@ -8,7 +8,7 @@ A small, functional web application for **one HR Manager** to manage employee re
 
 - **Frontend:** Angular + TypeScript, Taomish `common-ui-v2`, and JSON-driven pages
 - **Backend:** Java 21 + Spring Boot 3, Spring Web, Spring Data JPA, Bean Validation
-- **Database:** PostgreSQL, with Flyway for schema changes
+- **Database:** PostgreSQL, with Liquibase for schema changes and demo seeding
 - **Tests:** JUnit 5, Mockito, and Spring tests for the backend. Angular TestBed with the frontend workspace's test runner for key UI behavior.
 
 ## Read these files in order

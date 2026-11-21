@@ -1,13 +1,13 @@
 {
-  "title": "By currency",
+  "title": "Salary by currency",
   "store": "salarySummary",
   "tableList": [
     { "name": "currencyCode", "label": "Currency" },
-    { "name": "employeeCount", "label": "Employees" },
-    { "name": "average", "label": "Average", "pipe": "salary" },
-    { "name": "minimum", "label": "Minimum", "pipe": "salary" },
-    { "name": "maximum", "label": "Maximum", "pipe": "salary" },
-    { "name": "total", "label": "Total", "pipe": "salary" }
+    { "name": "employeeCount", "label": "Employees", "pipe": "headcount" },
+    { "name": "average", "label": "Average", "pipe": "salaryAmount" },
+    { "name": "minimum", "label": "Minimum", "pipe": "salaryAmount" },
+    { "name": "maximum", "label": "Maximum", "pipe": "salaryAmount" },
+    { "name": "total", "label": "Total", "pipe": "salaryAmount" }
   ],
   "steps": []
 }

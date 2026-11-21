@@ -17,6 +17,7 @@ export class EmployeesComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   @ViewChild('editor', { static: true }) private editor!: ElementRef<HTMLDialogElement>;
   @ViewChild('confirmation', { static: true }) private confirmation!: ElementRef<HTMLDialogElement>;
+  @ViewChild('salaryFilters', { static: true }) private salaryFilters!: ElementRef<HTMLDetailsElement>;
   @ViewChild(DialogComponent, { static: true }) private sharedDialog!: DialogComponent;
 
   readonly config = pageConfig;
@@ -93,13 +94,20 @@ export class EmployeesComponent implements OnInit {
     if (minimum && !amountPattern.test(minimum)) this.rangeErrors['minSalary'] = 'Enter a valid amount.';
     if (maximum && !amountPattern.test(maximum)) this.rangeErrors['maxSalary'] = 'Enter a valid amount.';
     if ((minimum || maximum) && !filters.currency) this.rangeErrors['currency'] = 'Choose a currency.';
-    if (Object.keys(this.rangeErrors).length) return;
-    if (minimum && maximum && cents(maximum) < cents(minimum)) {
+    if (!Object.keys(this.rangeErrors).length && minimum && maximum && cents(maximum) < cents(minimum)) {
       this.rangeErrors['maxSalary'] = 'Maximum must be at least the minimum.';
+    }
+    if (Object.keys(this.rangeErrors).length) {
+      this.salaryFilters.nativeElement.open = true;
       return;
     }
     this.appliedFilters = filters;
     void this.load(0);
+  }
+
+  get hasSalaryFilters(): boolean {
+    const { currency, minSalary, maxSalary } = this.appliedFilters;
+    return Boolean(currency || minSalary.trim() || maxSalary.trim());
   }
 
   clearFilters(): void {

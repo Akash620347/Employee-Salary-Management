@@ -1,5 +1,7 @@
-package com.acme.salary.insight;
+package com.acme.salary.controller;
 
+import com.acme.salary.dto.InsightResponse;
+import com.acme.salary.interfaces.InsightService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

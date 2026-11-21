@@ -1,4 +1,4 @@
-package com.acme.salary.employee;
+package com.acme.salary.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

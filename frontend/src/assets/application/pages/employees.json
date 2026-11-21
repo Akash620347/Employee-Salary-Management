@@ -2,11 +2,9 @@
   "title": "Employees",
   "store": "employees",
   "tableList": [
-    { "name": "employeeCode", "label": "Employee code" },
-    { "name": "fullName", "label": "Name" },
+    { "name": "fullName", "label": "Employee", "pipe": "employeeIdentity" },
     { "name": "department", "label": "Department" },
     { "name": "countryCode", "label": "Country" },
-    { "name": "currencyCode", "label": "Currency" },
     { "name": "annualGrossBaseSalary", "label": "Annual gross base salary", "pipe": "salary" },
     { "name": "status", "label": "Status", "pipe": "status" },
     { "name": "actions", "label": "Actions", "pipe": "actions" }

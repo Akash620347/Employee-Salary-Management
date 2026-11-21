@@ -1,4 +1,4 @@
-package com.acme.salary.insight;
+package com.acme.salary.dto;
 
 import java.util.List;
 

@@ -40,7 +40,3 @@ JOIN numbered_countries ON country_index = employee_number % 6
 JOIN numbered_teams ON team_index = (employee_number / 6) % 6
 CROSS JOIN names
 ON CONFLICT DO NOTHING;
-
-SELECT count(*) AS seeded_employees
-FROM employees
-WHERE employee_code ~ '^DEMO-[0-9]{5}$' AND email LIKE 'employee-%@example.invalid';

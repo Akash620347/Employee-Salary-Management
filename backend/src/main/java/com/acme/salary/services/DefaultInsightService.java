@@ -1,11 +1,13 @@
-package com.acme.salary.insight;
+package com.acme.salary.services;
 
 import com.acme.salary.common.ApiException;
 import com.acme.salary.common.SalaryRules;
-import com.acme.salary.employee.Employee;
-import com.acme.salary.insight.InsightRepository.SalaryGroup;
-import com.acme.salary.insight.InsightResponse.Summary;
-import com.acme.salary.insight.InsightResponse.TopEarner;
+import com.acme.salary.dto.InsightResponse;
+import com.acme.salary.dto.InsightResponse.Summary;
+import com.acme.salary.dto.InsightResponse.TopEarner;
+import com.acme.salary.interfaces.InsightService;
+import com.acme.salary.repository.InsightRepository;
+import com.acme.salary.repository.InsightRepository.SalaryGroup;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,9 +42,9 @@ class DefaultInsightService implements InsightService {
             throw new ApiException.Invalid("limit", "Limit must be between 1 and 100.");
         }
         return insights.topEarners(currencyCode, PageRequest.of(0, limit)).stream()
-                .map(Employee::toResponse)
-                .map(employee -> new TopEarner(employee.id(), employee.employeeCode(), employee.firstName(),
-                        employee.lastName(), employee.department(), employee.currencyCode(), employee.annualGrossBaseSalary()))
+                .map(employee -> new TopEarner(employee.getId(), employee.getEmployeeCode(), employee.getFirstName(),
+                        employee.getLastName(), employee.getDepartment(), employee.getCurrencyCode(),
+                        employee.getAnnualGrossBaseSalary().toPlainString()))
                 .toList();
     }
 

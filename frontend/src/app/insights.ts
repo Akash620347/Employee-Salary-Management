@@ -19,7 +19,9 @@ export class InsightsComponent implements OnInit {
   readonly currencies = currencies;
   currency = 'USD';
   summary: SalarySummary | null = null;
+  summaryRows: Array<SalaryGroup & { employeeShare: number }> = [];
   departments: SalaryGroup[] | null = null;
+  departmentCount = 0;
   topEarners: Array<TopEarner & { fullName: string }> | null = null;
   summaryError = '';
   departmentsError = '';
@@ -34,7 +36,12 @@ export class InsightsComponent implements OnInit {
   async loadSummary(): Promise<void> {
     this.summaryError = '';
     try {
-      this.summary = await this.api.summary();
+      const summary = await this.api.summary();
+      this.summary = summary;
+      this.summaryRows = summary.byCurrency.map(group => ({
+        ...group,
+        employeeShare: group.employeeCount / Math.max(1, summary.activeEmployeeCount) * 100,
+      }));
     } catch (error) {
       this.summaryError = apiError(error, 'Salary summaries could not be loaded.').message;
     } finally {
@@ -46,6 +53,7 @@ export class InsightsComponent implements OnInit {
     this.departmentsError = '';
     try {
       this.departments = await this.api.departments();
+      this.departmentCount = new Set(this.departments.map(group => group.department)).size;
     } catch (error) {
       this.departmentsError = apiError(error, 'Department summaries could not be loaded.').message;
     } finally {
