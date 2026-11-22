@@ -8,12 +8,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
 @Table(name = "employees")
+@Data
 public class Employee {
     public enum Status { ACTIVE, INACTIVE }
 
@@ -56,53 +58,5 @@ public class Employee {
     public void changeStatus(Status status) {
         this.status = status;
         updatedAt = Instant.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmployeeCode() {
-        return employeeCode;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public String getJobTitle() {
-        return jobTitle;
-    }
-
-    public String getCountryCode() {
-        return countryCode;
-    }
-
-    public String getCurrencyCode() {
-        return currencyCode;
-    }
-
-    public BigDecimal getAnnualGrossBaseSalary() {
-        return annualGrossBaseSalary;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public long getVersion() {
-        return version;
     }
 }

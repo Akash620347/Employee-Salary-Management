@@ -64,8 +64,14 @@ import { Employee, formatSalary } from './salary-api';
                 </button>
               }
               @else {
-                <button type="button" class="row-reactivate" (click)="changeEmployeeStatus.emit(row)"
-                        [attr.aria-label]="'Reactivate ' + row.fullName">Reactivate</button>
+                <button type="button" class="row-action" title="Reactivate employee"
+                        (click)="changeEmployeeStatus.emit(row)" [attr.aria-label]="'Reactivate ' + row.fullName">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="m10 8.5 5 3.5-5 3.5Z"/>
+                  </svg>
+                </button>
               }
               <button type="button" class="row-action row-action-danger" title="Permanently delete employee"
                       (click)="deleteEmployee.emit(row)" [attr.aria-label]="'Permanently delete ' + row.fullName">
